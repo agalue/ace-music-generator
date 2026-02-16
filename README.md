@@ -22,20 +22,17 @@ This project uses the ACE-Step 1.5 model to generate music from text prompts. It
 
 ### Memory Usage
 
-Apple Silicon uses unified memory (shared between CPU and GPU):
-- **15-second songs**: ~4-6GB
-- **30-second songs**: ~6-10GB
-- **60-second songs**: ~10-16GB
-- **120-second songs**: ~16-24GB
+This project was tested on an M4 Mac Mini with 16GB of unified memory. Apple Silicon uses unified memory shared between CPU and GPU.
 
 ## Installation
 
 ```bash
 # 1. Install uv (if not already installed)
+# Or, try `brew install uv`
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # 2. Clone and install all dependencies (ace-step included)
-git clone <your-repo-url>
+git https://github.com/agalue/ace-music-generator.git
 cd music-generator
 uv sync
 
@@ -81,7 +78,7 @@ These detailed markers help the AI model understand the intended vocal delivery 
 **Step 2: Generate the song:**
 ```bash
 uv run python main.py \
-  "original nu-metal rock inspired by Linkin Park style with TWO DISTINCT vocalists: first vocalist is aggressive MALE RAPPER with hip-hop delivery and rhythmic spoken word, second vocalist is powerful FEMALE ROCK SINGER with raspy intense screaming vocals and raw emotional delivery, EXTREMELY HEAVY distorted guitar riffs with aggressive tone and complex melodic shredding solo, thick bass, electronic elements and synths, pounding explosive drums with double bass, raw energy, dramatic contrast between male rap verses and female screaming chorus, alternative metal atmosphere" \
+  "Original nu-metal rock inspired by Linkin Park style with TWO DISTINCT vocalists: first vocalist is aggressive MALE RAPPER with hip-hop delivery and rhythmic spoken word, second vocalist is powerful FEMALE ROCK SINGER with raspy intense screaming vocals and raw emotional delivery, EXTREMELY HEAVY distorted guitar riffs with aggressive tone and complex melodic shredding solo, thick bass, electronic elements and synths, pounding explosive drums with double bass, raw energy, dramatic contrast between male rap verses and female screaming chorus, alternative metal atmosphere" \
   --lyrics-file sample_lyrics.txt \
   --duration 180 \
   --bpm 125 \
@@ -89,7 +86,9 @@ uv run python main.py \
   --vocal-language "en" \
   --output linkin_park_style.wav \
   --batch-size 1 \
-  --steps 16
+  --steps 24 \
+  --guidance 12 \
+  --time-signature "4/4"
 ```
 
 This will generate `linkin_park_style.wav` - a full 3-minute original rock song featuring:
