@@ -1,0 +1,70 @@
+[project]
+name = "ace-music-generator"
+version = "0.1.0"
+description = "ACE-Step 1.5 Music Generator for Apple Silicon"
+readme = "README.md"
+requires-python = ">=3.11,<3.13"
+authors = [
+    {name = "Alejandro Galue", email = "galue.alejandro@gmail.com"},
+]
+dependencies = [
+    # ACE-Step music generation model - all dependencies aligned with its requirements
+    "ace-step @ git+https://github.com/ACE-Step/ACE-Step-1.5.git",
+
+    # Core dependencies (versions match ace-step 1.5 requirements for compatibility)
+    "torch>=2.9.1",
+    "torchaudio>=2.9.1",
+    "torchvision",
+    "transformers>=4.51.0,<4.58.0",
+    "accelerate>=1.12.0",
+    "diffusers",
+    "einops>=0.8.1",
+    "soundfile>=0.13.1",
+
+    # Apple Silicon optimization (macOS arm64 only)
+    "mlx>=0.25.2; platform_machine == 'arm64' and sys_platform == 'darwin'",
+    "mlx-lm>=0.20.0; platform_machine == 'arm64' and sys_platform == 'darwin'",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.8.0",
+]
+
+[tool.uv]
+# Apple Silicon (M1/M2/M3/M4) with MPS acceleration
+# PyTorch from standard PyPI with Metal Performance Shaders support
+
+# Override ace-step's CUDA-specific PyTorch dependencies with macOS-compatible versions
+override-dependencies = [
+    "torch>=2.9.1",
+    "torchaudio>=2.9.1",
+    "torchvision",
+]
+
+[tool.uv.sources]
+# Install ace-step from git
+ace-step = { git = "https://github.com/ACE-Step/ACE-Step-1.5.git" }
+
+# ============================================================================
+# Ruff Configuration (Code Formatting & Linting)
+# ============================================================================
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "UP",  # pyupgrade
+]
+ignore = []
