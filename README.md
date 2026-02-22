@@ -32,8 +32,8 @@ This project was tested on an M4 Mac Mini with 16GB of unified memory. Apple Sil
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # 2. Clone and install all dependencies (ace-step included)
-git https://github.com/agalue/ace-music-generator.git
-cd music-generator
+git clone https://github.com/agalue/ace-music-generator.git
+cd ace-music-generator
 uv sync
 
 # 3. Verify installation
@@ -53,59 +53,56 @@ ACE-Step: OK
 
 ```bash
 # Generate instrumental music
-uv run python main.py "energetic rock guitar solo"
+uv run main.py "energetic rock guitar solo"
 
 # Specify custom duration (in seconds)
-uv run python main.py "calm piano melody" --duration 30
+uv run main.py "calm piano melody" --duration 30
 
 # Adjust generation quality (more steps = higher quality but slower)
-uv run python main.py "jazz saxophone improvisation" --steps 16 --guidance 8.0
+uv run main.py "jazz saxophone improvisation" --steps 16 --guidance 8.0
 ```
 
-### Featured Example - Linkin Park-Inspired Rock with Vocals
+### Featured Example - Early-2000s Nu-Metal / Rap-Rock (Original)
 
-Generate a 3-minute original nu-metal rock song in the style of Linkin Park with contrasting male rapper and female rock vocalist:
+Generate a 3-minute original nu-metal / rap-rock song with an early-2000s mainstream nu-metal/rap-rock arrangement (original composition; do not clone any real singer’s voice):
 
 **Step 1: Use the provided sample lyrics**
 
-The repository includes `sample_lyrics.txt` with original lyrics inspired by Linkin Park's emotional and powerful style. The lyrics include detailed section markers specifying:
-- **Vocal style instructions**: `[Verse 1 - Male Rapper: aggressive hip-hop delivery]` and `[Verse 1 - Female Lead Singer: powerful raspy rock vocals with raw emotion]`
-- **Song structure**: Verse, Chorus, Pre-Chorus, Bridge, Guitar Solo
-- **Intensity markers**: Help guide dynamic shifts between sections
+The repository includes `sample_lyrics.txt` with original lyrics designed for nu-metal / rap-rock dynamics.
 
-These detailed markers help the AI model understand the intended vocal delivery and create more distinct vocal performances.
+ACE-Step treats two inputs differently, so it matters what goes where:
+- **`prompt` (tags field)** — comma-separated descriptive tags work best and match the model's training data format (e.g. `female lead vocalist, raspy female vocals, nu-metal, drop-tuned guitar`). Prose sentences and ALL-CAPS directives are less reliable — the DiT text encoder has a 256-token cap on the full structured prompt, so concise tags make better use of that budget than verbose instructions.
+- **`--lyrics-file` (lyrics field)** — singable text with bracket section-header tags such as `[intro]`, `[verse]`, `[chorus]`, `[bridge]`, `[outro]`. The entire lyrics string (section headers included) is passed as a single token sequence to the text encoder — there is no special regex parsing of brackets in the current codebase. The headers follow the model's training data conventions and help the model segment the song structure; style hints inside the brackets (e.g. `[verse - rap]`, `[chorus - rock]`) may guide vocal delivery since the model was trained on varied bracket formats. Avoid voice prefixes like `F:` / `M:` — they are not part of any training convention and behave as literal lyric text.
+- **Conservative length guard** — `main.py` rejects lyrics files exceeding 4,096 characters. This is a conservative quality proxy: the text encoder's hard truncation is at 2,048 *tokens* (roughly 8,000+ English characters), but keeping lyrics well under that budget improves lyric-to-audio alignment.
 
 **Step 2: Generate the song:**
 ```bash
-uv run python main.py \
-  "Original nu-metal rock inspired by Linkin Park style with TWO DISTINCT vocalists: first vocalist is aggressive MALE RAPPER with hip-hop delivery and rhythmic spoken word, second vocalist is powerful FEMALE ROCK SINGER with raspy intense screaming vocals and raw emotional delivery, EXTREMELY HEAVY distorted guitar riffs with aggressive tone and complex melodic shredding solo, thick bass, electronic elements and synths, pounding explosive drums with double bass, raw energy, dramatic contrast between male rap verses and female screaming chorus, alternative metal atmosphere" \
+uv run main.py \
+"nu-metal, rap-rock, early 2000s rock, dual vocalists, male rapper, male hip-hop flow, male rhythmic rap, rap verses, female rock vocalist, raspy female vocals, female rock screaming, female belted chorus, vocal contrast, heavy distorted guitar, drop-tuned guitar, palm mute riffs, heavy bass guitar, punchy kick snare, energetic, aggressive, intense, powerful" \
   --lyrics-file sample_lyrics.txt \
   --duration 180 \
   --bpm 125 \
   --key-scale "E minor" \
   --vocal-language "en" \
-  --output linkin_park_style.wav \
+  --output nu_metal_dual_vocals.wav \
   --batch-size 1 \
-  --steps 24 \
-  --guidance 12 \
-  --time-signature "4/4"
+  --steps 8 \
+  --guidance 7 \
+  --time-signature "4/4" \
+  --lm-model acestep-5Hz-lm-1.7B
 ```
 
-This will generate `linkin_park_style.wav` - a full 3-minute original rock song featuring:
-- **Two vocalists with maximum contrast**: 
-  - **Male Rapper**: Aggressive hip-hop delivery with rhythmic spoken word for verses
-  - **Female Rock Singer**: Powerful raspy screaming vocals with raw emotion for choruses (like current Linkin Park vocalist Emily Armstrong)
-- **Heavy guitar**: Extremely distorted aggressive guitar riffs with thick, powerful tone
-- **Complex guitar solo**: Intricate melodic shredding with heavy distortion
-- **Electronic elements**: Synths and industrial sounds
-- **Dynamic structure**: Intro, male rap verses alternating with female rock screaming, pre-chorus builds, explosive choruses, bridge with both vocalists, intricate guitar solo, outro
-- **Clear vocal distinction**: Strong contrast between male hip-hop rap style and female raspy rock screaming
+This will generate `nu_metal_dual_vocals.wav` - a full 3-minute original rock song featuring:
+- **Male rapper (verses)**: Tight rhythmic hip-hop flow with rap delivery — drives the verse sections
+- **Female rock vocalist (pre-choruses, choruses, bridge, outro)**: Raw, raspy rock singing with belted choruses and hard screams on peak hook words
+- **Heavy guitar**: Drop-tuned rhythm guitars with realistic high-gain amp tone, tight palm-mutes, big low end
+- **Dynamic structure**: Intro → male rap verse → female pre-chorus → female chorus → male rap verse 2 → female pre-chorus → female chorus → half-time bridge → final chorus → female outro
 
 The script will display timing information showing how long the generation took on your hardware.
 
 ### Output Files
 
-**Important**: The system generates **2 audio variations** per prompt (batch size = 2), giving you multiple options to choose from:
+**Important**: The system generates **one WAV per batch item**. By default `--batch-size` is 2, so you get two variations per prompt:
 - `{output}_1.wav` - First variation
 - `{output}_2.wav` - Second variation
 
@@ -163,23 +160,12 @@ Generation uses your Apple Silicon GPU (MPS) for acceleration. Time scales rough
 
 ⚠️ **Important**: To generate music with vocals, you **MUST** provide a lyrics file using `--lyrics-file`. Simply describing "vocals" in the prompt will NOT produce singing - the model requires actual lyrics text.
 
-See the **Featured Example** in the Usage section above for a complete Linkin Park-style rock song with vocals. The key steps are:
+See the **Featured Example** in the Usage section above for a complete nu-metal / rap-rock song with vocals. The key steps are:
 
 1. Create a text file with your lyrics (one file can contain full song lyrics)
 2. Use `--lyrics-file` to point to your lyrics
 3. Describe the vocal style and music genre in your prompt
 4. Optionally add musical parameters like `--bpm`, `--key-scale`, etc.
-
-**Quick vocal example:**
-```bash
-# Create simple lyrics
-echo "La la la, singing in the rain\nDancing through the pain" > simple_lyrics.txt
-
-# Generate pop song with vocals
-uv run python main.py "upbeat pop song with cheerful female vocals" \
-  --lyrics-file simple_lyrics.txt \
-  --duration 20
-```
 
 Without `--lyrics-file`, you'll only get instrumental music regardless of your prompt.
 
@@ -200,20 +186,18 @@ AI music generation is still evolving. Here are tips to get the best results:
 **Prompt Engineering:**
 - Be specific: "live recording feel" or "realistic instruments"
 - Describe the energy and mood clearly
-- For rock: mention specific instruments like "EXTREMELY HEAVY distorted electric guitar" and "pounding explosive drums"
-- For vocals: describe voice character like "powerful male vocals" or "soft female voice"
-- **Dual vocals with gender contrast**: For maximum vocal distinction (like Linkin Park), use "TWO DISTINCT vocalists" and specify genders: "first vocalist is aggressive MALE RAPPER with hip-hop delivery, second vocalist is powerful FEMALE ROCK SINGER with raspy intense screaming vocals"
-- **Emphasize contrast**: Use phrases like "dramatic contrast between male rap verses and female screaming chorus" to help the model create distinctly different vocal performances
-- **Heavy guitar**: Use emphatic descriptors like "EXTREMELY HEAVY distorted guitar", "aggressive tone", "thick powerful distortion" for heavier guitar sound
-- **Complex solos**: Specify "intricate melodic shredding", "complex guitar solo", "technical lead guitar" for more sophisticated instrumental sections
+- For rock: add instrument tags like `distorted guitar, drop-tuned guitar, palm mute riffs, heavy bass guitar, punchy kick snare`
+- For vocals: add tags like `male vocalist, raspy female vocals, belted chorus, vocal fry`
+- **Dual vocals with contrast**: list both roles as separate tags — e.g. `male rapper, male hip-hop flow, female rock vocalist, raspy female vocals, vocal contrast`. Prose instructions like "the male should rap" are not part of the model's training distribution and are ignored.
+- **Section-level vocal hints**: add style descriptors inside bracket section headers in your lyrics file — e.g. `[verse - rap]` and `[chorus - rock]` — to reinforce per-section delivery alongside the caption tags.
+- **Heavy guitar**: add tags like `heavy distorted guitar, drop-tuned guitar, high-gain amp` for heavier tone
+- **Complex solos**: add tags like `guitar solo, melodic lead guitar, shredding` for more sophisticated instrumental sections
 
 **Lyrics Formatting for Dual Vocalists:**
-- Use detailed section markers that specify WHICH vocalist and WHAT style: `[Verse 1 - Male Rapper: aggressive hip-hop delivery]` or `[Chorus - Female Lead Singer: explosive raspy screaming vocals]`
-- Specify gender for maximum vocal distinction: "Male Rapper" vs "Female Lead Singer"
-- Be specific about vocal characteristics: "powerful raspy rock vocals with raw emotion", "rhythmic spoken word with attitude", "intense raspy vocals with grit"
-- Mark instrumental sections with detail: `[Guitar Solo - Instrumental: intricate melodic shredding with heavy distortion]`
-- Specify when both vocalists perform: `[Bridge - Both Vocalists: rapper and female singer alternating and harmonizing]`
-- The more detailed your vocal style descriptions and gender specifications, the better the model can create distinct vocal performances
+- Use concise section markers that specify vocalist + delivery: `[Verse 1 - spoken word - male]`, `[Verse 1 - sing-rap - male]`, `[Chorus - raspy belting + scream accents - female]`
+- Keep tags short so they don’t “leak” into vocals; put detailed production notes in the main prompt
+- Mark instrumentals clearly: `[Instrumental - guitar riff]`, `[Guitar Solo - instrumental]`, `[Breakdown - half-time - aggressive]`
+- Use parentheses for ad-libs/backing lines (e.g. `(yeah)`, `(turn it down)`)
 
 **Batch Generation:**
 - Use `--batch-size 2` (default) to generate variations
@@ -330,27 +314,27 @@ Try these example prompts for different genres and techniques:
 
 ```bash
 # Electronic/Synth
-uv run python main.py "uplifting trance with ethereal pads and driving bassline" --duration 20
+uv run main.py "uplifting trance with ethereal pads and driving bassline" --duration 20
 
 # Classical
-uv run python main.py "romantic piano piece in the style of Chopin" --duration 30
+uv run main.py "romantic piano piece in the style of Chopin" --duration 30
 
 # Ambient
-uv run python main.py "atmospheric soundscape with warm drones" --duration 25
+uv run main.py "atmospheric soundscape with warm drones" --duration 25
 
 # Jazz
-uv run python main.py "smooth jazz quartet with saxophone lead" --duration 20
+uv run main.py "smooth jazz quartet with saxophone lead" --duration 20
 
 # Cinematic
-uv run python main.py "epic orchestral battle music with brass and strings" --duration 25
+uv run main.py "epic orchestral battle music with brass and strings" --duration 25
 
 # Using Musical Parameters (BPM, key, time signature)
-uv run python main.py "upbeat funk groove" \
+uv run main.py "upbeat funk groove" \
   --bpm 110 --key-scale "C major" --time-signature "4/4" \
   --duration 30
 
 # High Quality Generation (more steps and guidance)
-uv run python main.py "cinematic sci-fi atmosphere" \
+uv run main.py "cinematic sci-fi atmosphere" \
   --steps 20 --guidance 8.5 --batch-size 2 --duration 20
 ```
 

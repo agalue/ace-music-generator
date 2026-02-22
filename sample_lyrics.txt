@@ -1,79 +1,82 @@
-[Intro - Instrumental]
+[intro]
 
-[Verse 1 - Male Rapper: aggressive hip-hop delivery]
-Shattered mirrors reflect who I was
-Every fragment cuts deeper than the last
-Built these walls to keep the darkness out
-But the shadows found a way inside at last
+[verse - rap]
+Shattered mirror who was I | every shard is talking back
+Tried to keep my breathing calm | while my heartbeat starts to crack
+Built a wall to keep it out | but the dark slips through the seams
+Say I'm fine I say I'm good | but I'm choking on my dreams
+Hands in pockets hide the shake | keep the panic out of sight
+Noise inside my skull turns up | makes the silence feel like bass
+I was running from the truth | now it's staring in my face
+I don't want your sympathy | I just want the volume down
 
-[Verse 1 - Female Lead Singer: powerful raspy rock vocals with raw emotion]
-I'm screaming through the static in my mind
-Clawing through the weight of all these lies
-Every scar's a story left unspoken
-Every wound reminds me I'm still alive
+[verse - rock]
+I'm screaming through the static | till it finally clears the air
+Clawing through the weight of lies | I pretended wasn't there
+If I'm broken let it show | let the light come through the split
+I'm the voice I tried to bury | now I'm digging myself back
 
-[Pre-Chorus - Female Lead Singer: building emotional power]
-I won't surrender to the gravity
-That pulls me down beneath the waves
-I'll fight through every moment of this agony
-Until I find the strength to break these chains
+[pre-chorus - rock]
+I won't fold under gravity | trying to pull me under waves
+I won't drown inside this misery | just to keep the peace I faked
+I'll fight through every second | every doubt I used to feed
+Till I find the grit to snap these chains | and breathe the air I need
 
-[Chorus - Female Lead Singer: explosive raspy screaming vocals]
-I'm rising from the ashes of my former self
-Burning through the pain that held me down
-No more running from the chaos in my head
-I'm standing up, I'm breaking through, I'm screaming loud
-This is my revolution, watch me now
-I'm taking back the fire from the doubt
+[chorus - rock]
+I'm rising from the ashes | of the version that I knew
+Burning through the pressure | that kept telling me to lose
+No more running from the chaos | no more hiding in the crowd
+I'm standing up I'm breaking through | I'm finally screaming loud
+Turn it down the static | turn it down right now
+This is my revolution | watch me turn the static down
+If the world wants to erase me | I'm gonna leave a brighter mark
+Hear the drum inside my chest | watch it set the night on sparks
 
-[Verse 2 - Male Rapper: rhythmic spoken word with attitude]
-Haunted by the echoes of regret
-Every failure branded on my skin
-But I've learned to breathe through the suffering
-The only way to win is to begin again
+[verse - rap]
+Haunted by the echo | of the choices that I made
+Every should have in the mirror | every debt I never paid
+But I learned to breathe through suffering | turn it into something live
+Cut the fear off mid-sentence | cut the noise out of the mix
+All the voices that would shame me | sound like broken politics
+Four on the floor in my head | while I'm sprinting from the past
 
-[Verse 2 - Female Lead Singer: intense raspy vocals with grit]
-I'm tearing down the prison I constructed
-Breaking every chain I forged in fear
-The voice that tried to silence my rebellion
-Fades to nothing when the truth becomes clear
+[verse - rock]
+I'm tearing down the prison | I constructed out of fear
+Breaking every lock I made | just to keep the pain in here
+If I'm shaking let me shake | then I'll steady on the one
+I'm not begging for a rescue | I'm the rescue I become
 
-[Pre-Chorus - Female Female Lead Singer: intensifying]
-I won't surrender to the gravity
-That pulls me down beneath the waves
-I'll fight through every moment of this agony
-Until I find the strength to break these chains
+[pre-chorus - rock]
+I'll fight through every second | every doubt I used to feed
+Till I find the grit to snap these chains | and breathe the air I need
 
-[Chorus - Female Lead Singer: maximum intensity raspy screaming]
-I'm rising from the ashes of my former self
-Burning through the pain that held me down
-No more running from the chaos in my head
-I'm standing up, I'm breaking through, I'm screaming loud
-This is my revolution, watch me now
-I'm taking back the fire from the doubt
+[chorus - rock]
+I'm rising from the ashes | of the version that I knew
+No more running from the chaos | no more hiding in the crowd
+Turn it down the static | turn it down right now
+Hear the drum inside my chest | watch it set the night on sparks
 
-[Guitar Solo - Instrumental: intricate melodic shredding with heavy distortion]
+[bridge - rock]
+I've been crawling through the wreckage | of everything I've known
+But in the ruins I discovered | I was never on my own
+The scars become my armor | the panic turns to tone
+The pain becomes my power | when I claim it as my own
+I was built out of the breaking | I was shaped by every fall
+Now I stand inside the thunder | and I don't flinch at all
+Turn the doubt into a rhythm | let it hit like cannon fire
+I'm stronger in the fracture | I'm the match I'm the wire
 
-[Bridge - Both Vocalists: rapper and female singer alternating and harmonizing]
-I've been crawling through the wreckage
-Of everything I've known
-But in the ruins I discovered
-I was never alone
-The scars become my armor
-The pain becomes my fuel
-I'm stronger in the breaking
-Than I ever was before
+[chorus - rock]
+I'm rising from the ashes | of the version that I knew
+Burning through the pressure | that kept telling me to lose
+No more running from the chaos | no more hiding in the crowd
+I'm standing up I'm breaking through | I'm finally screaming loud
+This is my revolution | watch me turn the static down
+Turn it down the static | turn it down right now
+If the world wants to erase me | I'm gonna leave a brighter mark
+Hear the drum inside my chest | watch it set the night on sparks
 
-[Final Chorus - Female Lead Singer: explosive raspy screaming at peak intensity]
-I'm rising from the ashes of my former self
-Burning through the pain that held me down
-No more running from the chaos in my head
-I'm standing up, I'm breaking through, I'm screaming loud
-This is my revolution, watch me now
-I'm taking back the fire from the doubt
-
-[Outro - Female Lead Singer: fading raspy emotional delivery]
-In the silence after the storm
-I finally hear my voice
-In the darkness I've transformed
-This is not the end, this is my choice
+[outro - rock]
+In the silence after the storm | I can finally hear my voice
+In the dark I learned to change | this is not the end it's choice
+I'm the fire in the ashes | and I'm never backing down

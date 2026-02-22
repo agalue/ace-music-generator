@@ -1,5 +1,6 @@
 import argparse
 import os
+import shutil
 import site
 import time
 from pathlib import Path
@@ -148,7 +149,19 @@ Examples:
         "--model",
         type=str,
         default="acestep-v15-turbo",
-        help="Model to use (default: acestep-v15-turbo)",
+        help=(
+            "DiT model variant to use (default: acestep-v15-turbo). "
+            "If you pass a 5Hz LM model name like 'acestep-5Hz-lm-1.7B', it will be treated as --lm-model."
+        ),
+    )
+    parser.add_argument(
+        "--lm-model",
+        type=str,
+        default="",
+        help=(
+            "Optional 5Hz LM model directory name (e.g., 'acestep-5Hz-lm-1.7B'). "
+            "This script does not require the LM for basic text2music, but we will ensure it's downloaded if set."
+        ),
     )
 
     return parser.parse_args()
@@ -169,17 +182,28 @@ def load_lyrics(lyrics_file: str | None) -> str:
     if not lyrics_file:
         return ""
 
+    MAX_LYRICS_CHARS = 4096
+
     try:
         with open(lyrics_file, encoding="utf-8") as f:
             lyrics = f.read().strip()
-        print(f"📄 Loaded lyrics from: {lyrics_file}")
-        return lyrics
     except FileNotFoundError:
         print(f"❌ Lyrics file not found: {lyrics_file}")
         raise SystemExit(1)
     except Exception as e:
         print(f"❌ Error reading lyrics file: {e}")
         raise SystemExit(1)
+
+    if len(lyrics) > MAX_LYRICS_CHARS:
+        print(
+            f"❌ Lyrics too long: {len(lyrics):,} characters "
+            f"(maximum is {MAX_LYRICS_CHARS:,})."
+        )
+        print("   Please shorten your lyrics file and try again.")
+        raise SystemExit(1)
+
+    print(f"📄 Loaded lyrics from: {lyrics_file} ({len(lyrics):,} chars)")
+    return lyrics
 
 
 def detect_device() -> str:
@@ -207,6 +231,47 @@ def get_project_root() -> str:
     return site_packages
 
 
+def is_lm_model_name(model_name: str) -> bool:
+    """Return True if *model_name* looks like an ACE-Step 5Hz LM checkpoint directory."""
+    return (model_name or "").strip().startswith("acestep-5Hz-lm-")
+
+
+def repair_incomplete_dit_checkpoint(model_dir: Path) -> None:
+    """Move aside incomplete DiT checkpoints so ACE-Step auto-download can succeed.
+
+    ACE-Step's download precheck only tests for directory existence. If the folder exists
+    but is missing required artifacts (most critically silence_latent.pt), initialization
+    fails without re-downloading. We detect that case and move the folder away.
+    """
+    try:
+        if not model_dir.is_dir():
+            return
+        silence_latent = model_dir / "silence_latent.pt"
+        config_json = model_dir / "config.json"
+
+        # Minimal integrity check for a DiT checkpoint folder.
+        if silence_latent.is_file() and config_json.is_file():
+            return
+
+        # If either required file is missing, treat as incomplete.
+        if not silence_latent.is_file() or not config_json.is_file():
+            suffix = time.strftime("%Y%m%d-%H%M%S")
+            backup_dir = model_dir.with_name(f"{model_dir.name}.incomplete-{suffix}")
+            print("⚠️  Detected an incomplete DiT checkpoint folder:")
+            print(f"   {model_dir}")
+            if not silence_latent.is_file():
+                print(f"   Missing: {silence_latent.name}")
+            if not config_json.is_file():
+                print(f"   Missing: {config_json.name}")
+            print("   Moving it aside so ACE-Step can re-download a clean copy...")
+            shutil.move(str(model_dir), str(backup_dir))
+            print(f"   Moved to: {backup_dir}")
+            print()
+    except Exception as exc:
+        # Non-fatal; initialization will still attempt to proceed.
+        print(f"⚠️  Could not repair checkpoint folder {model_dir}: {exc}")
+
+
 def initialize_model(
     model_name: str, device: str, project_root: str
 ) -> tuple[AceStepHandler, float, bool]:
@@ -226,7 +291,7 @@ def initialize_model(
     print("✨ Loading ACE-Step handler...")
     handler = AceStepHandler()
 
-    print(f"📦 Loading model: {model_name}")
+    print(f"📦 Loading DiT model: {model_name}")
     print("   (Model files detected in cache)")
     print()
 
@@ -238,6 +303,10 @@ def initialize_model(
         print(f"📥 Model will be downloaded to: {model_path}")
         print("   (First run only - ~3-5GB download)")
         print()
+
+    # If the folder exists but is missing required artifacts, move it aside so
+    # ACE-Step's auto-download can fetch a complete checkpoint.
+    repair_incomplete_dit_checkpoint(model_path)
 
     # Time model loading
     model_load_start = time.time()
@@ -400,6 +469,26 @@ def main() -> None:
     # Parse command-line arguments
     args = parse_arguments()
 
+    # Back-compat: if user passes an LM checkpoint name to --model, treat it as LM selection.
+    dit_model = (args.model or "").strip()
+    lm_model = (args.lm_model or "").strip()
+    if is_lm_model_name(dit_model) and not lm_model:
+        lm_model = dit_model
+        dit_model = "acestep-v15-turbo"
+        print(
+            "⚠️  '--model' was set to a 5Hz LM checkpoint; using it as '--lm-model' instead."
+        )
+        print(f"   LM model: {lm_model}")
+        print(f"   DiT model: {dit_model}")
+        print()
+
+    # Turbo DiT checkpoints clamp diffusion steps to 8 internally.
+    if "turbo" in dit_model and args.steps > 8:
+        print(
+            f"⚠️  '{dit_model}' clamps --steps to 8 internally; you requested {args.steps}, using 8."
+        )
+        args.steps = 8
+
     # Load lyrics if provided
     lyrics = load_lyrics(args.lyrics_file)
 
@@ -412,8 +501,25 @@ def main() -> None:
     # Get project root for model storage
     project_root = get_project_root()
 
+    # If LM selection was provided, ensure it's downloaded (so passing it doesn't break).
+    if lm_model:
+        try:
+            from acestep.model_downloader import ensure_lm_model
+
+            checkpoints_root = Path(project_root) / "checkpoints"
+            print(f"🧠 Ensuring 5Hz LM is available: {lm_model}")
+            ok, msg = ensure_lm_model(model_name=lm_model, checkpoints_dir=checkpoints_root)
+            if not ok:
+                print(f"⚠️  LM download/availability check failed: {msg}")
+            else:
+                print(f"✅ LM ready: {msg}")
+            print()
+        except Exception as exc:
+            print(f"⚠️  Skipping LM availability check (error: {exc})")
+            print()
+
     # Initialize model
-    handler, model_load_time, success = initialize_model(args.model, device, project_root)
+    handler, model_load_time, success = initialize_model(dit_model, device, project_root)
     if not success:
         raise SystemExit(1)
 
