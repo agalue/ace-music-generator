@@ -1,7 +1,6 @@
 import argparse
 import os
 import shutil
-import site
 import time
 from pathlib import Path
 
@@ -195,10 +194,7 @@ def load_lyrics(lyrics_file: str | None) -> str:
         raise SystemExit(1)
 
     if len(lyrics) > MAX_LYRICS_CHARS:
-        print(
-            f"❌ Lyrics too long: {len(lyrics):,} characters "
-            f"(maximum is {MAX_LYRICS_CHARS:,})."
-        )
+        print(f"❌ Lyrics too long: {len(lyrics):,} characters (maximum is {MAX_LYRICS_CHARS:,}).")
         print("   Please shorten your lyrics file and try again.")
         raise SystemExit(1)
 
@@ -225,10 +221,15 @@ def get_project_root() -> str:
     """Get the project root path for ACE-Step models.
 
     Returns:
-        Project root directory path where checkpoints are stored
+        Project root directory path where checkpoints are stored.
+        Respects the ACESTEP_PROJECT_ROOT environment variable (same as the
+        handler's own resolution logic), falling back to the current working
+        directory so that ``./checkpoints/`` is always the default location.
     """
-    site_packages = site.getsitepackages()[0]
-    return site_packages
+    env_root = os.environ.get("ACESTEP_PROJECT_ROOT")
+    if env_root:
+        return os.path.abspath(env_root)
+    return os.getcwd()
 
 
 def is_lm_model_name(model_name: str) -> bool:
@@ -475,9 +476,7 @@ def main() -> None:
     if is_lm_model_name(dit_model) and not lm_model:
         lm_model = dit_model
         dit_model = "acestep-v15-turbo"
-        print(
-            "⚠️  '--model' was set to a 5Hz LM checkpoint; using it as '--lm-model' instead."
-        )
+        print("⚠️  '--model' was set to a 5Hz LM checkpoint; using it as '--lm-model' instead.")
         print(f"   LM model: {lm_model}")
         print(f"   DiT model: {dit_model}")
         print()
