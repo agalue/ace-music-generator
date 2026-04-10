@@ -7,28 +7,39 @@ AI-powered music generation using ACE-Step 1.5, optimized for Apple Silicon with
 This project uses the ACE-Step 1.5 model to generate music from text prompts. It's configured to work seamlessly with `uv` package manager and automatically uses MPS acceleration on Apple Silicon Macs.
 
 **Features:**
-- 🍎 **Apple Silicon Optimized** - MPS acceleration for M1/M2/M3/M4 chips
-- 🎵 **High-Quality Music Generation** - Instrumental and vocal music with lyrics
-- ⚡ **Fast Performance** - 15-second song in ~40-50 seconds
-- 🎛️ **Musical Control** - BPM, key, time signature, and more
+- Apple Silicon Optimized — MPS acceleration for M1/M2/M3/M4 chips with MLX DiT backend
+- High-Quality Music Generation — Instrumental and vocal music with lyrics
+- Fast Performance — 15-second song in ~40-50 seconds on M4
+- Musical Control — BPM, key, time signature, sampler, and more
+- XL Models — 4B parameter DiT variants for higher quality (requires ~9 GB unified memory)
+- Hardened Parameters — All inputs are validated against upstream constants before inference
 
 ## Requirements
 
 - **Python**: 3.11 or 3.12
-- **OS**: macOS (Apple Silicon M1/M2/M3/M4 recommended, also works on Intel Macs with CPU)
+- **OS**: macOS (Apple Silicon M1/M2/M3/M4 recommended; Intel Macs fall back to CPU)
 - **Package Manager**: [uv](https://docs.astral.sh/uv/) (recommended) or pip
-- **Disk Space**: ~5GB for model files on first run
-- **Memory**: 8GB minimum, 16GB+ recommended for longer audio
+- **Disk Space**: ~5 GB for standard model files on first run; ~10 GB for XL models
+- **Memory**: 8 GB minimum for standard models; 16 GB+ recommended; ~9 GB required for XL models
 
-### Memory Usage
+### Memory Usage by Model
 
-This project was tested on an M4 Mac Mini with 16GB of unified memory. Apple Silicon uses unified memory shared between CPU and GPU.
+| Model | VRAM / Unified Memory | Notes |
+|---|---|---|
+| `acestep-v15-turbo` | ~4.7 GB | Default; fast, 8 steps |
+| `acestep-v15-sft` | ~4.7 GB | High quality, 50 steps |
+| `acestep-v15-base` | ~4.7 GB | Full feature set, 50 steps |
+| `acestep-v15-xl-turbo` | ~9 GB | 4B DiT, fast, 8 steps |
+| `acestep-v15-xl-sft` | ~9 GB | 4B DiT, high quality, 50 steps |
+| `acestep-v15-xl-base` | ~9 GB | 4B DiT, full features, 50 steps |
+
+This project was tested on an M4 Mac Mini with 16 GB of unified memory.
 
 ## Installation
 
 ```bash
 # 1. Install uv (if not already installed)
-# Or, try `brew install uv`
+# Or: brew install uv
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # 2. Clone and install all dependencies (ace-step included)
@@ -49,26 +60,24 @@ ACE-Step: OK
 
 ## Usage
 
-### Quick Start - Instrumental Music
+### Quick Start — Instrumental Music
 
 ```bash
-# Generate instrumental music
+# Generate instrumental music (15 s, default settings)
 uv run main.py "energetic rock guitar solo"
 
-# Specify custom duration (in seconds)
+# Custom duration
 uv run main.py "calm piano melody" --duration 30
 
-# Adjust generation quality (more steps = higher quality but slower)
+# Higher quality (more steps; slower)
 uv run main.py "jazz saxophone improvisation" --steps 16 --guidance 8.0
 ```
 
-### Featured Example - Early-2000s Nu-Metal / Rap-Rock (Original)
+### Featured Example — Early-2000s Nu-Metal / Rap-Rock (Original)
 
-Generate a 3-minute original nu-metal / rap-rock song with an early-2000s mainstream nu-metal/rap-rock arrangement (original composition; do not clone any real singer’s voice):
+Generate a 3-minute original nu-metal / rap-rock song:
 
-**Step 1: Use the provided sample lyrics**
-
-The repository includes `sample_lyrics.txt` with original lyrics designed for nu-metal / rap-rock dynamics.
+**Step 1: Understand the two text inputs**
 
 ACE-Step treats two inputs differently, so it matters what goes where:
 - **`prompt` (tags field)** — comma-separated descriptive tags work best and match the model's training data format (e.g. `female lead vocalist, raspy female vocals, nu-metal, drop-tuned guitar`). Prose sentences and ALL-CAPS directives are less reliable — the DiT text encoder has a 256-token cap on the full structured prompt, so concise tags make better use of that budget than verbose instructions.
@@ -78,12 +87,12 @@ ACE-Step treats two inputs differently, so it matters what goes where:
 **Step 2: Generate the song:**
 ```bash
 uv run main.py \
-"nu-metal, rap-rock, early 2000s rock, dual vocalists, male rapper, male hip-hop flow, male rhythmic rap, rap verses, female rock vocalist, raspy female vocals, female rock screaming, female belted chorus, vocal contrast, heavy distorted guitar, drop-tuned guitar, palm mute riffs, heavy bass guitar, punchy kick snare, energetic, aggressive, intense, powerful" \
+  "nu-metal, rap-rock, early 2000s rock, dual vocalists, male rapper, male hip-hop flow, male rhythmic rap, rap verses, female rock vocalist, raspy female vocals, female rock screaming, female belted chorus, vocal contrast, heavy distorted guitar, drop-tuned guitar, palm mute riffs, heavy bass guitar, punchy kick snare, energetic, aggressive, intense, powerful" \
   --lyrics-file sample_lyrics.txt \
   --duration 180 \
   --bpm 125 \
   --key-scale "E minor" \
-  --vocal-language "en" \
+  --vocal-language en \
   --output nu_metal_dual_vocals.wav \
   --batch-size 1 \
   --steps 8 \
@@ -92,129 +101,135 @@ uv run main.py \
   --lm-model acestep-5Hz-lm-1.7B
 ```
 
-This will generate `nu_metal_dual_vocals.wav` - a full 3-minute original rock song featuring:
-- **Male rapper (verses)**: Tight rhythmic hip-hop flow with rap delivery — drives the verse sections
-- **Female rock vocalist (pre-choruses, choruses, bridge, outro)**: Raw, raspy rock singing with belted choruses and hard screams on peak hook words
-- **Heavy guitar**: Drop-tuned rhythm guitars with realistic high-gain amp tone, tight palm-mutes, big low end
-- **Dynamic structure**: Intro → male rap verse → female pre-chorus → female chorus → male rap verse 2 → female pre-chorus → female chorus → half-time bridge → final chorus → female outro
+### XL Model Example (requires ~9 GB unified memory)
 
-The script will display timing information showing how long the generation took on your hardware.
+```bash
+# XL turbo — same speed as standard turbo but higher quality
+uv run main.py "epic orchestral battle music with brass and strings" \
+  --model acestep-v15-xl-turbo \
+  --duration 30
+
+# XL SFT — highest quality, 50 steps (auto-detected from model name)
+uv run main.py "cinematic sci-fi atmosphere with ethereal pads" \
+  --model acestep-v15-xl-sft \
+  --duration 30 \
+  --guidance 8.0
+```
+
+The script automatically sets `--steps` to 50 when a non-turbo model is selected.
 
 ### Output Files
 
 **Important**: The system generates **one WAV per batch item**. By default `--batch-size` is 2, so you get two variations per prompt:
-- `{output}_1.wav` - First variation
-- `{output}_2.wav` - Second variation
+- `{stem}_1{ext}` — First variation
+- `{stem}_2{ext}` — Second variation
 
 For example, running with `--output song.wav` will create `song_1.wav` and `song_2.wav`.
 
 ### Command-Line Arguments
 
 **Required:**
-- `prompt` - Text description of the music to generate
+- `prompt` — Text description of the music to generate (use comma-separated tags for best results)
 
 **Basic Options:**
-- `--duration` - Length in seconds (default: 15)
-- `--output` - Output filename (default: generated_music.wav)
+- `--duration` — Length in seconds **[10–600]** (default: 15)
+- `--output` — Output filename (default: `generated_music.wav`)
 
 **Quality Options:**
-- `--steps` - Inference steps, higher = better quality (4-32, default: 8)
-- `--guidance` - Guidance scale, higher = follows prompt more closely (1-15, default: 7.0)
-- `--seed` - Random seed for reproducibility (-1 for random, default: -1)
+- `--steps` — Inference steps **[1–100]**, higher = better quality but slower (default: auto — 8 for turbo, 50 for base/sft)
+- `--guidance` — Guidance scale **[1.0–20.0]**, higher = follows prompt more closely (default: 7.0)
+- `--seed` — Random seed for reproducibility (-1 for random, default: -1)
 
 **Musical Parameters:**
-- `--lyrics-file` - Path to text file containing lyrics - **REQUIRED for vocal music** (without this, only instrumental music is generated)
-- `--bpm` - Beats per minute (e.g., 120)
-- `--key-scale` - Musical key (e.g., "C major", "A minor", "D#")
-- `--time-signature` - Time signature (e.g., "4/4", "3/4", "6/8")
-- `--vocal-language` - Language for vocals: en, zh, ja, etc. (default: en)
+- `--lyrics-file` — Path to text file containing lyrics — **REQUIRED for vocal music** (without this, only instrumental music is generated)
+- `--bpm` — Beats per minute **[30–300]** (e.g., 120)
+- `--key-scale` — Musical key — must be a valid key+mode string (e.g., `"C major"`, `"A minor"`, `"F# minor"`). Leave empty to let the model decide.
+- `--time-signature` — Time signature with numerator in `[2, 3, 4, 6]` (e.g., `"4/4"`, `"3/4"`, `"6/8"`). Leave empty to let the model decide.
+- `--vocal-language` — ISO language code for vocals (default: `en`). Invalid codes are rejected. Common values: `en`, `zh`, `ja`, `es`, `fr`, `de`, `ko`, `pt`, `ru`
 
 **Advanced Options:**
-- `--batch-size` - Number of variations to generate (1-4, default: 2)
-- `--model` - Model variant (default: acestep-v15-turbo)
+- `--batch-size` — Number of variations to generate **[1–8]** (default: 2)
+- `--model` — DiT model variant (default: `acestep-v15-turbo`). See **Model Zoo** table above.
+- `--lm-model` — Optional 5Hz LM model name (e.g., `acestep-5Hz-lm-1.7B`). Ensures the model is downloaded; the LM is not required for basic text-to-music generation.
+- `--infer-method` — Diffusion inference method: `ode` (deterministic, default) or `sde` (stochastic). Try `sde` for more variation between seeds.
+- `--sampler` — Diffusion sampler: `euler` (fast, default) or `heun` (higher-order, slightly slower, can improve quality).
+- `--download-source` — Preferred model download source: `huggingface` (default via `auto`), `modelscope`, or `auto`. Use `modelscope` if HuggingFace is slow or blocked in your region.
 
 ### First Run
 
-On the first run, the script will automatically download the ACE-Step model files (~3-5GB) from HuggingFace. This may take several minutes depending on your internet connection. Subsequent runs will use the cached models.
+On the first run, the script will automatically download the ACE-Step model files from HuggingFace. This may take several minutes depending on your internet connection. Subsequent runs use the cached models.
+
+| Model type | Approx. download size |
+|---|---|
+| Standard (turbo / sft / base) | ~3–5 GB |
+| XL (xl-turbo / xl-sft / xl-base) | ~8–10 GB |
 
 ### Generation Time
 
-Generation time varies based on your hardware, the duration of audio requested, and the number of inference steps. The script will display actual timing information after each generation, including:
-- Model loading time
-- Audio generation time
-- Total elapsed time
-- Generation speed (as multiple of realtime)
+Generation time varies based on your hardware, the duration of audio requested, and the number of inference steps. The script displays timing information after each generation.
 
 Example timing output:
 ```
-⏱️  Timing Summary:
-   Model loading: 34.0s
+Timing Summary:
+   Model loading:    34.0s
    Music generation: 1m 57.8s
-   Total elapsed: 2m 32.0s
+   Total elapsed:    2m 32.0s
    Generation speed: 0.65x realtime
 ```
 
-Generation uses your Apple Silicon GPU (MPS) for acceleration. Time scales roughly linearly with audio duration and step count.
+Generation uses your Apple Silicon GPU (MPS) with MLX DiT acceleration. Time scales roughly linearly with audio duration and step count.
 
 ### Generating Vocal Music
 
-⚠️ **Important**: To generate music with vocals, you **MUST** provide a lyrics file using `--lyrics-file`. Simply describing "vocals" in the prompt will NOT produce singing - the model requires actual lyrics text.
+**Important**: To generate music with vocals, you **MUST** provide a lyrics file using `--lyrics-file`. Simply describing "vocals" in the prompt will NOT produce singing — the model requires actual lyrics text.
 
-See the **Featured Example** in the Usage section above for a complete nu-metal / rap-rock song with vocals. The key steps are:
-
+Steps:
 1. Create a text file with your lyrics (one file can contain full song lyrics)
 2. Use `--lyrics-file` to point to your lyrics
 3. Describe the vocal style and music genre in your prompt
 4. Optionally add musical parameters like `--bpm`, `--key-scale`, etc.
 
-Without `--lyrics-file`, you'll only get instrumental music regardless of your prompt.
+Without `--lyrics-file`, you'll get instrumental music regardless of your prompt.
 
 ### Tips for Better Quality
 
-AI music generation is still evolving. Here are tips to get the best results:
-
 **For Higher Quality:**
-- Use more `--steps` (16-20 for important songs, up to 32 for best quality)
-- Higher steps take longer but produce more refined audio
-- Default 8 steps is fast but may sound synthetic
+- Use more `--steps` (16–20 for important songs, up to 32 for turbo models or 50+ for base/sft)
+- Try `--sampler heun` for subtle quality improvements at the cost of ~20% slower generation
+- Try `--infer-method sde` for more natural variation between seeds
 
 **Genre Considerations:**
-- Electronic, EDM, and ambient music typically sound more realistic
+- Electronic, EDM, and ambient music typically sound most realistic
 - Rock, metal, and orchestral can sometimes sound MIDI-like
-- Vocals with lyrics file produce much better results than instrumental-only
+- Vocals with a lyrics file produce much better results than relying on the prompt alone
 
 **Prompt Engineering:**
 - Be specific: "live recording feel" or "realistic instruments"
 - Describe the energy and mood clearly
 - For rock: add instrument tags like `distorted guitar, drop-tuned guitar, palm mute riffs, heavy bass guitar, punchy kick snare`
 - For vocals: add tags like `male vocalist, raspy female vocals, belted chorus, vocal fry`
-- **Dual vocals with contrast**: list both roles as separate tags — e.g. `male rapper, male hip-hop flow, female rock vocalist, raspy female vocals, vocal contrast`. Prose instructions like "the male should rap" are not part of the model's training distribution and are ignored.
-- **Section-level vocal hints**: add style descriptors inside bracket section headers in your lyrics file — e.g. `[verse - rap]` and `[chorus - rock]` — to reinforce per-section delivery alongside the caption tags.
-- **Heavy guitar**: add tags like `heavy distorted guitar, drop-tuned guitar, high-gain amp` for heavier tone
-- **Complex solos**: add tags like `guitar solo, melodic lead guitar, shredding` for more sophisticated instrumental sections
+- **Dual vocals with contrast**: list both roles as separate tags — e.g. `male rapper, male hip-hop flow, female rock vocalist, raspy female vocals, vocal contrast`
+- **Section-level vocal hints**: add style descriptors inside bracket section headers in your lyrics file — e.g. `[verse - rap]` and `[chorus - rock]`
+- **Heavy guitar**: add tags like `heavy distorted guitar, drop-tuned guitar, high-gain amp`
 
 **Lyrics Formatting for Dual Vocalists:**
-- Use concise section markers that specify vocalist + delivery: `[Verse 1 - spoken word - male]`, `[Verse 1 - sing-rap - male]`, `[Chorus - raspy belting + scream accents - female]`
-- Keep tags short so they don’t “leak” into vocals; put detailed production notes in the main prompt
-- Mark instrumentals clearly: `[Instrumental - guitar riff]`, `[Guitar Solo - instrumental]`, `[Breakdown - half-time - aggressive]`
+- Use concise section markers that specify vocalist + delivery: `[Verse 1 - spoken word - male]`, `[Chorus - raspy belting + scream accents - female]`
+- Mark instrumentals clearly: `[Instrumental - guitar riff]`, `[Guitar Solo - instrumental]`
 - Use parentheses for ad-libs/backing lines (e.g. `(yeah)`, `(turn it down)`)
 
 **Batch Generation:**
-- Use `--batch-size 2` (default) to generate variations
-- Listen to both files - quality can vary between generations
-- Keep the better-sounding version
+- Use `--batch-size 2` (default) to generate variations and pick the best one
+- Quality can vary noticeably between seeds even with the same prompt
 
 ### Common Warnings (Safe to Ignore)
 
-You may see these warnings during execution - they are normal and don't affect functionality:
+You may see these warnings during execution — they are normal and do not affect functionality:
 
 1. **"bitsandbytes not installed. Using standard AdamW"**
-   - This is expected. The standard optimizer works fine for inference.
+   — Expected. The standard optimizer works fine for inference.
 
 2. **"MLX VAE decode failed... falling back to PyTorch VAE"**
-   - This happens when MLX runs out of memory for very long audio.
-   - The automatic fallback to PyTorch works perfectly.
-   - No action needed.
+   — This happens when MLX runs out of memory for very long audio. The automatic fallback works correctly.
 
 ## Technical Details
 
@@ -222,95 +237,54 @@ You may see these warnings during execution - they are normal and don't affect f
 
 The project automatically detects and uses the best available hardware acceleration:
 
-**Device priority:**
-1. **MPS** - Apple Silicon (M1/M2/M3/M4) - highest priority
-2. **CPU** - Fallback when MPS is not available (Intel Macs, or compatibility issues)
+1. **MPS** — Apple Silicon (M1/M2/M3/M4) — highest priority
+2. **CPU** — Fallback for Intel Macs or when MPS is unavailable (significantly slower)
 
-**Device-specific optimizations:**
-- **MPS**: MLX VAE acceleration for Apple Silicon, memory management optimizations
-- **CPU**: Standard PyTorch backend (significantly slower)
-
-Example device detection output:
-```bash
-# On Apple Silicon Mac:
-🍎 Using device: mps (Apple Silicon)
-
-# On Intel Mac or CPU fallback:
-💻 Using device: cpu (No GPU acceleration)
-```
-
-### Memory Management
-
-**Environment variable** (automatically configured):
-```python
-os.environ["PYTORCH_MPS_HIGH_WATERMARK_RATIO"] = "0.0"
-```
-This optimizes memory management on Apple Silicon unified memory architecture.
+**MPS-specific optimizations applied automatically:**
+- MLX DiT backend enabled for Apple Silicon (new in ACE-Step 1.5)
+- MLX VAE acceleration for decode
+- MPS memory watermark disabled (`PYTORCH_MPS_HIGH_WATERMARK_RATIO=0.0`) for unified memory
 
 ### ACE-Step Handler Architecture
 
-This project uses the ACE-Step handler-based API with automatic device detection:
+This project uses the ACE-Step handler-based API:
 
 ```python
 import torch
 from acestep.handler import AceStepHandler
 
-# Auto-detect best device
-if torch.backends.mps.is_available():
-    device = "mps"
-else:
-    device = "cpu"
+device = "mps" if torch.backends.mps.is_available() else "cpu"
 
-# Initialize handler
 handler = AceStepHandler()
-
-# Initialize service with model
 handler.initialize_service(
     project_root=cache_dir,
     config_path="acestep-v15-turbo",
-    device=device,  # auto-detected: mps or cpu
+    device=device,
+    use_mlx_dit=(device == "mps"),   # MLX DiT backend on Apple Silicon
 )
 
-# Generate music
 result = handler.generate_music(
     captions="your text prompt",
     audio_duration=15.0,
     inference_steps=8,
     guidance_scale=7.0,
+    infer_method="ode",
+    sampler_mode="euler",
 )
 ```
 
 ### PyTorch Configuration
 
-This project uses standard PyTorch from PyPI with MPS (Metal Performance Shaders) support for Apple Silicon.
-
-**Installation:**
-- Uses `uv` for dependency management
-- ace-step installed directly from git as a dependency in `pyproject.toml`
-- PyTorch 2.9+ with MPS support from PyPI
+- Managed by `uv`; `ace-step` installed directly from git
+- PyTorch 2.9+ from PyPI with MPS support
 - Dependency overrides ensure macOS-compatible PyTorch is used (ace-step's CUDA builds are automatically overridden)
 
-**Verify your acceleration is working:**
-
+**Verify acceleration:**
 ```bash
-# Check MPS availability
-uv run python -c "import torch; print(f'MPS Available: {torch.backends.mps.is_available()}')"
-
-# Check which device will be used
-uv run python -c "import torch; device = 'mps' if torch.backends.mps.is_available() else 'cpu'; print(f'Device: {device}')"
+uv run python -c "import torch; print(f'MPS: {torch.backends.mps.is_available()}')"
 ```
 
-### Performance Characteristics
-
-**Apple Silicon (MPS backend):**
-- GPU acceleration via Metal Performance Shaders
-- Unified memory architecture (no CPU↔GPU transfer overhead)
-- Optimized for M-series chips (M1/M2/M3/M4)
-- Excellent performance for music generation tasks
-
 ## Example Prompts
-
-Try these example prompts for different genres and techniques:
 
 ```bash
 # Electronic/Synth
@@ -328,20 +302,23 @@ uv run main.py "smooth jazz quartet with saxophone lead" --duration 20
 # Cinematic
 uv run main.py "epic orchestral battle music with brass and strings" --duration 25
 
-# Using Musical Parameters (BPM, key, time signature)
+# Using Musical Parameters
 uv run main.py "upbeat funk groove" \
-  --bpm 110 --key-scale "C major" --time-signature "4/4" \
-  --duration 30
+  --bpm 110 --key-scale "C major" --time-signature "4/4" --duration 30
 
-# High Quality Generation (more steps and guidance)
+# High Quality (Heun sampler + more steps)
 uv run main.py "cinematic sci-fi atmosphere" \
-  --steps 20 --guidance 8.5 --batch-size 2 --duration 20
+  --steps 20 --sampler heun --guidance 8.5 --batch-size 2 --duration 20
+
+# XL Model (best quality, requires ~9 GB)
+uv run main.py "lush neo-soul with electric piano and mellow vocals" \
+  --model acestep-v15-xl-sft --duration 30
 ```
 
 ## Credits
 
-- **ACE-Step**: Advanced music generation model by ACE-Step team
-- **PyTorch**: Deep learning framework with MPS support  
+- **ACE-Step**: Advanced music generation model by the ACE-Step team
+- **PyTorch**: Deep learning framework with MPS support
 - **uv**: Fast Python package manager by Astral
 
 ## License
